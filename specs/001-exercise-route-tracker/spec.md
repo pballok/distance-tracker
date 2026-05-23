@@ -5,6 +5,20 @@
 **Status**: Draft
 **Input**: User description: "This is a Single Page Application that allows people to track the distance they made by exercises (walking, running, biking, etc) and shows that distance as progress along a pre-configured route between two points on Google Maps. The page is split into two side-by-side parts. On the left side, the map is displayed that is zoomable, draggable, and it shows the selected route between the start and end locations. On the right side, there is a table that shows the completed exercises. Above the table there are buttons for filtering the table be exercise type or date. The map shows the configured route as a red line, and the combined distance of all the exercises show in the table show up as a green part of the route line on the map."
 
+## Clarifications
+
+### Session 2026-05-23
+
+- Q: How should exercise data be persisted? → A: PostgreSQL database running in a dedicated Docker container alongside the SPA, accessed via a backend API.
+- Q: Which frontend framework should the SPA use? → A: React.
+- Q: Which technology should the backend API use? → A: Go with GraphQL.
+- Q: How should exercise deletion work, and is editing supported? → A: Each table row has a delete button (with confirmation prompt) and an edit button to modify the entry.
+- Q: How is the pre-configured route defined and stored? → A: Stored in PostgreSQL and seeded via a migration or seed script; no admin UI required.
+
+### Session 2026-05-23 (Amendment)
+
+- UI component library and styling: All UI widgets, form controls, layout structures, and interactive components MUST use Material UI (MUI), as mandated by the project Constitution (Principle V). Custom styles are permitted only where MUI's `sx` prop or theme system cannot satisfy the requirement.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Log a Completed Exercise (Priority: P1)
@@ -20,6 +34,9 @@ A user has just finished a walk, run, or bike ride and wants to record it. They 
 1. **Given** the user is on the main page, **When** they add a new exercise with type "Running", a date, and a distance, **Then** the new exercise appears as a new row in the exercise table with all entered details correctly shown.
 2. **Given** the exercise table has at least one entry, **When** the user adds another exercise, **Then** the total cumulative distance reflected by the green line on the map increases accordingly.
 3. **Given** the user is adding an exercise, **When** they submit incomplete or invalid data (e.g., negative distance or a missing date), **Then** the system displays a clear error message and does not save the entry.
+4. **Given** an exercise entry exists in the table, **When** the user clicks its edit button and modifies a field, **Then** the updated entry is saved, the table reflects the change, and the map's green progress updates accordingly.
+5. **Given** an exercise entry exists in the table, **When** the user clicks its delete button and confirms the prompt, **Then** the entry is removed from the table and the map's green progress decreases to reflect the remaining cumulative distance.
+6. **Given** the user clicks a delete button, **When** they dismiss the confirmation prompt without confirming, **Then** no entry is removed and the table and map remain unchanged.
 
 ---
 
@@ -79,12 +96,14 @@ A user wants to review only a subset of their exercise history — for example, 
 - **FR-009**: The map's green progress segment MUST update in real time whenever the active filter changes or a new exercise is added.
 - **FR-010**: The layout MUST present the map and the exercise panel side by side on a single page, with no multi-page navigation required to access either.
 - **FR-011**: When cumulative exercise distance equals or exceeds the configured route length, the system MUST display the entire route as green.
-- **FR-012**: The system MUST persist exercise data so that progress is retained across page reloads and browser sessions.
+- **FR-012**: The system MUST persist exercise data in a PostgreSQL database (accessed via a Go/GraphQL backend API) so that progress is retained across page reloads and browser sessions.
+- **FR-013**: Each exercise table row MUST provide a delete button; activating it MUST present a confirmation prompt before permanently removing the entry.
+- **FR-014**: Each exercise table row MUST provide an edit button that opens the entry for modification; the user MUST be able to change any field (type, date, distance) and save the updated entry.
 
 ### Key Entities *(include if feature involves data)*
 
 - **Exercise**: Represents a single completed physical activity. Key attributes: type (e.g., Walking, Running, Biking), date completed, distance covered (in a consistent unit).
-- **Route**: The pre-configured path between a start location and an end location. Key attributes: start point, end point, total length, the geographic path of the route.
+- **Route**: The pre-configured path between a start location and an end location. Stored as a database record in PostgreSQL and seeded via a migration or seed script at deployment time. Key attributes: start point, end point, total length, the geographic path of the route. There is exactly one Route record; no admin UI is provided to modify it.
 - **Progress**: A derived value — the cumulative distance of exercises currently displayed in the table, expressed as a segment along the Route from its start point.
 
 ## Success Criteria *(mandatory)*
@@ -100,10 +119,13 @@ A user wants to review only a subset of their exercise history — for example, 
 
 ## Assumptions
 
-- The route (start point, end point, and path) is configured once at the application level and is the same for all users — individual users do not configure their own routes. The route is guaranteed to be present before the app is deployed; an unconfigured route state will not occur in normal use.
+- The route (start point, end point, and path) is configured once at the application level and is the same for all users — individual users do not configure their own routes. The route is stored as a single record in PostgreSQL and populated via a database migration or seed script run at deployment time. An unconfigured route state will not occur in normal use.
 - Exercise distance is recorded and displayed in kilometers. Conversion to miles is out of scope for v1.
 - The supported exercise types are fixed for v1: Walking, Running, and Biking. User-defined custom types are out of scope.
 - Users access the app via a modern desktop web browser; mobile browser support is desirable but not a hard requirement for v1.
-- Exercise entries can be deleted but not edited after submission; an edit-in-place feature is out of scope for v1.
+- Exercise entries can be both deleted (with a confirmation prompt) and edited after submission. Each table row exposes dedicated delete and edit controls.
 - The map platform used is Google Maps, as explicitly specified in the feature description.
 - All users share a single combined exercise log; per-user authentication and individual progress tracking are out of scope for v1.
+- The application is deployed as a multi-container setup: the SPA (served as static files or via a frontend server), a backend API, and a PostgreSQL database each run in their own dedicated Docker containers.
+- The SPA is built with React (TypeScript). All UI components, form controls, and layout structures use Material UI (MUI); custom CSS is permitted only where MUI's `sx` prop or theme system cannot satisfy the requirement, per the project Constitution (Principle V).
+- The backend API is implemented in Go and exposes a GraphQL endpoint. The React frontend communicates with the backend exclusively via GraphQL queries and mutations.

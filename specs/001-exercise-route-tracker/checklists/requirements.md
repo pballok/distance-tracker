@@ -2,11 +2,12 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-05-22
+**Last Updated**: 2026-05-23
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
 
-- [x] No implementation details (languages, frameworks, APIs)
+- [ ] No implementation details (languages, frameworks, APIs)
 - [x] Focused on user value and business needs
 - [x] Written for non-technical stakeholders
 - [x] All mandatory sections completed
@@ -27,10 +28,10 @@
 - [x] All functional requirements have clear acceptance criteria
 - [x] User scenarios cover primary flows
 - [x] Feature meets measurable outcomes defined in Success Criteria
-- [x] No implementation details leak into specification
+- [ ] No implementation details leak into specification
 
 ## Notes
 
-- Google Maps is mentioned in the Assumptions section only, attributed explicitly to the user's feature description. It is treated as a product requirement (the specific mapping platform requested), not an implementation detail.
-- Exercise deletion (but not editing) is explicitly scoped in for v1 via Assumptions, though no dedicated user story covers it. Can be added as a follow-on story if needed.
-- All items pass. Spec is ready for `/speckit-clarify` or `/speckit-plan`.
+- **Technology choices in Assumptions (intentional)**: The `/speckit-clarify` session and a subsequent `/speckit-specify` amendment explicitly introduced the following technology constraints, all scoped to the Assumptions section by user decision: React + TypeScript (frontend), Material UI / MUI (UI framework, per project Constitution Principle V), Go + GraphQL (backend API), PostgreSQL (persistence), Docker multi-container deployment. These are user-specified product and governance constraints, not leaked implementation details — they are tracked here for transparency.
+- **Google Maps**: Mentioned in Assumptions only, attributed explicitly to the original feature description. Treated as a product requirement (the specific mapping platform requested).
+- **Checklist items marked incomplete**: "No implementation details" items reflect the deliberate inclusion of technology constraints above. All other quality criteria pass. The spec is ready for `/speckit-plan`.
